@@ -5,6 +5,8 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+// TODO: voir pour appeler autrement icones
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -19,14 +21,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Test',
+          title: '',
+          tabBarIcon: ({ color }) => <AntDesign name="clock-circle" size={24} color={color} />,
+        }}
+      />
+       <Tabs.Screen
+        name="add"
+        options={{
+          title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={30} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: '',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
