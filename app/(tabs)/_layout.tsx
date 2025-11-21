@@ -29,7 +29,7 @@ export default function TabLayout() {
         name="add"
         options={{
           title: '',
-          tabBarIcon: ({ color }) => <IconSymbol size={30} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <AntDesign name="plus" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
