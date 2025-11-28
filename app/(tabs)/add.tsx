@@ -7,6 +7,11 @@ import AutomaticTimer from '@/components/add/AutomaticTimer';
 import ManualTimeInput from '@/components/add/ManualTimeInput';
 import FloatingActionButtons from '@/components/add/FloatingActionButtons';
 
+//ToDo : Ne prend pas en compte le changement de jour. Du coup, en manuel,  quand on met une heure de fin sur le 
+// jour d'après l'heure du début, ça capte comme une erreur parce que ça compte comme si l'heure de fin était avant 
+// l'heure du début du coup ça marche pas enfin bref c'est pas fou
+
+
 export default function AddActivities() {
   const [title, setTitle] = useState("");
   const [selectedTag, setSelectedTag] = useState<number | null>(null);

@@ -3,6 +3,8 @@ import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { getAllActivities } from '@/services/database';
 import { Activity } from '@/services/database/types';
 
+
+//ToDo : les données ne se réinitialisent pas forcément quand on retourne sur le menu, régler 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
   const sec = seconds % 60;
