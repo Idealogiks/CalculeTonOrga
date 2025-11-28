@@ -193,13 +193,13 @@ export default function AddActivities() {
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.modeButton} onPress={toggleMode}>
-          <Text style={styles.modeButtonText}>
+        <TouchableOpacity style={[styles.modeButton, !isManualMode && styles.modeButtonActive]} onPress={() => setIsManualMode(false)}>
+          <Text style={[styles.modeButtonText, !isManualMode && styles.modeButtonTextActive]}>
             {"Ajout automatique"}
           </Text>
         </TouchableOpacity>
-                <TouchableOpacity style={styles.modeButton} onPress={toggleMode}>
-          <Text style={styles.modeButtonText}>
+        <TouchableOpacity style={[styles.modeButton, isManualMode && styles.modeButtonActive]} onPress={() => setIsManualMode(true)}>
+          <Text style={[styles.modeButtonText, isManualMode && styles.modeButtonTextActive]}>
             {"Ajout manuel"}
           </Text>
         </TouchableOpacity>
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     gap: 40,
   },
   modeButton: {
-    backgroundColor: '#D4D4FF',
+    backgroundColor: '#ffffffff',
     borderRadius: 25,
     paddingVertical: 15,
     alignItems: 'center',
@@ -237,6 +237,12 @@ const styles = StyleSheet.create({
   },
   modeButtonText: {
     fontSize: 16,
+    color: '#6464B3',
+  },
+  modeButtonActive: {
+    backgroundColor: '#D4D4FF',
+  },
+  modeButtonTextActive: {
     color: '#ffffffff',
   },
 });
