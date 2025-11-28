@@ -19,7 +19,7 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: '',
           tabBarIcon: ({ color }) => <AntDesign name="clock-circle" size={24} color={color} />,
