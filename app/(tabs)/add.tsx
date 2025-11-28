@@ -195,7 +195,12 @@ export default function AddActivities() {
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.modeButton} onPress={toggleMode}>
           <Text style={styles.modeButtonText}>
-            {isManualMode ? "Ajout automatique" : "Ajout manuel"}
+            {"Ajout automatique"}
+          </Text>
+        </TouchableOpacity>
+                <TouchableOpacity style={styles.modeButton} onPress={toggleMode}>
+          <Text style={styles.modeButtonText}>
+            {"Ajout manuel"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -213,25 +218,25 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingTop: 60, paddingBottom: 100 },
   bottomBar: {
     position: 'absolute',
+    flexDirection: 'row',
+    justifyContent: 'center',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#E8E5FF',
     elevation: 10,
+    gap: 40,
   },
   modeButton: {
-    backgroundColor: '#E8E5FF',
+    backgroundColor: '#D4D4FF',
     borderRadius: 25,
     paddingVertical: 15,
     alignItems: 'center',
+    flex: 0.5,
   },
   modeButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#7B68EE',
+    color: '#ffffffff',
   },
 });
