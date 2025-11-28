@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 
 interface StopwatchProps {
   isRunning?: boolean;
+  initialTime?: number;
   onReset?: () => void;
 }
 
