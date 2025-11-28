@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from "react-native";
+import {View,Text,TouchableOpacity,ScrollView,StyleSheet,KeyboardAvoidingView,Platform,Alert} from "react-native";
 import * as db from '@/services/database';
 import { Tag } from '@/services/database/types';
 import ActivityForm from '@/components/add/ActivityForm';
@@ -68,7 +59,7 @@ export default function AddActivities() {
     let activityEndTime: Date;
 
     if (isManualMode) {
-      if (manualEndTime <= manualStartTime) {
+      if (manualEndTime < manualStartTime) {
         Alert.alert("Attention", "L'heure de fin doit être après l'heure de début");
         return;
       }
@@ -166,8 +157,6 @@ export default function AddActivities() {
     );
   }
 
-  const hasActivity = elapsedTime > 0 || isRecording || isManualMode;
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -210,13 +199,10 @@ export default function AddActivities() {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {hasActivity && (
         <FloatingActionButtons
           onCancel={handleCancel}
           onValidate={handleValidate}
         />
-      )}
     </KeyboardAvoidingView>
   );
 }
