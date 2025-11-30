@@ -1,179 +1,42 @@
-import React, { useState, useEffect } from "react";
-import {View,Text,TouchableOpacity,ScrollView,StyleSheet,KeyboardAvoidingView,Platform,Alert} from "react-native";
-import * as db from '@/services/database';
-import { Tag } from '@/services/database/types';
+import React from "react";
+import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+
 import ActivityForm from '@/components/add/ActivityForm';
 import AutomaticTimer from '@/components/add/AutomaticTimer';
 import ManualTimeInput from '@/components/add/ManualTimeInput';
 import FloatingActionButtons from '@/components/add/FloatingActionButtons';
+import ModeSelector from '@/components/add/ModeSelector';
+
+import { useAddActivity } from '@/hooks/useAddActivity';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function AddActivities() {
-  const [title, setTitle] = useState("");
-  const [selectedTag, setSelectedTag] = useState<number | null>(null);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [isRecording, setIsRecording] = useState(false);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  
-  const [isManualMode, setIsManualMode] = useState(false);
-  const [manualStartTime, setManualStartTime] = useState(new Date());
-  const [manualEndTime, setManualEndTime] = useState(new Date());
+  const {
+    title, setTitle,
+    selectedTag, handleTagPress, tags,
+    loading,
+    isRecording, elapsedTime, handleStartStop,
+    isManualMode, handleModeSwitch,
+    manualStartTime, setManualStartTime,
+    manualEndTime, setManualEndTime,
+    handleValidate, handleCancel
+  } = useAddActivity();
 
-  useEffect(() => {
-    db.initDatabase()
-      .then(() => db.getAllTags())
-      .then(setTags)
-      .catch(() => Alert.alert("Erreur", "Impossible de charger les tags"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleStartStop = () => {
-    if (!isRecording) {
-      if (!selectedTag) {
-        Alert.alert("Attention", "Veuillez sélectionner un tag");
-        return;
-      }
-      setIsRecording(true);
-      setStartTime(new Date());
-    } else {
-      if (startTime) {
-        const now = new Date();
-        const sessionDuration = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-        setElapsedTime(prev => prev + sessionDuration);
-      }
-      setIsRecording(false);
-      setStartTime(null);
-    }
-  };
-
-  const handleValidate = async () => {
-    if (!selectedTag) {
-      Alert.alert("Attention", "Veuillez sélectionner un tag");
-      return;
-    }
-
-    let totalDuration: number;
-    let activityStartTime: Date;
-    let activityEndTime: Date;
-
-    if (isManualMode) {
-      activityStartTime = new Date(manualStartTime);
-      activityEndTime = new Date(manualEndTime);
-
-      if (activityEndTime.getTime() < activityStartTime.getTime()) {
-        activityEndTime.setDate(activityEndTime.getDate() + 1);
-      }
-      
-      totalDuration = Math.floor((activityEndTime.getTime() - activityStartTime.getTime()) / 1000);
-      
-      if (totalDuration <= 0) {
-        Alert.alert("Erreur", "La durée calculée est invalide (0 ou négative).");
-        return;
-      }
-
-    } else {
-      totalDuration = elapsedTime;
-      if (isRecording && startTime) {
-        const now = new Date();
-        totalDuration += Math.floor((now.getTime() - startTime.getTime()) / 1000);
-      }
-
-      if (totalDuration === 0) {
-        Alert.alert("Attention", "L'activité doit avoir une durée");
-        return;
-      }
-
-      activityEndTime = new Date();
-      activityStartTime = new Date(activityEndTime.getTime() - (totalDuration * 1000));
-    }
-
-    const tag = tags.find(t => t.id === selectedTag);
-    const activityName = title || tag?.name || "Activité";
-
-    try {
-      await db.createActivity({
-        title: activityName,
-        startTime: activityStartTime.toISOString(),
-        endTime: activityEndTime.toISOString(),
-        duration: totalDuration,
-        isManual: isManualMode,
-        tagId: selectedTag
-      });
-
-      const hours = Math.floor(totalDuration / 3600);
-      const minutes = Math.floor((totalDuration % 3600) / 60);
-      const seconds = totalDuration % 60;
-      const displayDuration = hours > 0 
-        ? `${hours}h ${minutes}m` 
-        : `${minutes}m ${seconds}s`;
-
-      Alert.alert(
-        "✅ Enregistré",
-        `${activityName}\n${displayDuration}`
-      );
-
-      resetForm();
-    } catch (error) {
-      console.error("Erreur sauvegarde:", error);
-      Alert.alert("Erreur", "Impossible de sauvegarder");
-    }
-  };
-
-  const handleCancel = () => {
-    Alert.alert(
-      "Annuler l'activité",
-      "Voulez-vous vraiment annuler cette activité ?",
-      [
-        { text: "Non", style: "cancel" },
-        { text: "Oui", style: "destructive", onPress: resetForm }
-      ]
-    );
-  };
-
-  const resetForm = () => {
-    setIsRecording(false);
-    setStartTime(null);
-    setElapsedTime(0);
-    setTitle("");
-    setSelectedTag(null);
-    setManualStartTime(new Date());
-    setManualEndTime(new Date());
-  };
-
-  const handleTagPress = (tagId: number) => {
-    if (isRecording || elapsedTime > 0) return;
-    
-    if (selectedTag === tagId) {
-      setSelectedTag(null);
-      setTitle("");
-    } else {
-      setSelectedTag(tagId);
-      const tag = tags.find(t => t.id === tagId);
-      if (tag) setTitle(tag.name);
-    }
-  };
-
-  const toggleMode = () => {
-    if (isRecording || elapsedTime > 0) {
-      Alert.alert("Attention", "Terminez ou annulez l'activité en cours");
-      return;
-    }
-    setIsManualMode(!isManualMode);
-  };
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <Text>Chargement...</Text>
+      <View style={[styles.center, { backgroundColor }]}>
+        <ActivityIndicator size="large" color={textColor} />
+        <Text style={{ color: textColor, marginTop: 10 }}>Chargement...</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
@@ -206,57 +69,21 @@ export default function AddActivities() {
         )}
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={[styles.modeButton, !isManualMode && styles.modeButtonActive]} onPress={() => setIsManualMode(false)}>
-          <Text style={[styles.modeButtonText, !isManualMode && styles.modeButtonTextActive]}>
-            {"Ajout automatique"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.modeButton, isManualMode && styles.modeButtonActive]} onPress={() => setIsManualMode(true)}>
-          <Text style={[styles.modeButtonText, isManualMode && styles.modeButtonTextActive]}>
-            {"Ajout manuel"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-        <FloatingActionButtons
-          onCancel={handleCancel}
-          onValidate={handleValidate}
-        />
+      <ModeSelector 
+        isManual={isManualMode} 
+        onSwitch={handleModeSwitch} 
+      />
+
+      <FloatingActionButtons
+        onCancel={handleCancel}
+        onValidate={handleValidate}
+      />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F7' },
+  container: { flex: 1 }, 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 20, paddingTop: 60, paddingBottom: 100 },
-  bottomBar: {
-    position: 'absolute',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    elevation: 10,
-    gap: 40,
-  },
-  modeButton: {
-    backgroundColor: '#ffffffff',
-    borderRadius: 25,
-    paddingVertical: 15,
-    alignItems: 'center',
-    flex: 0.5,
-  },
-  modeButtonText: {
-    fontSize: 16,
-    color: '#6464B3',
-  },
-  modeButtonActive: {
-    backgroundColor: '#D4D4FF',
-  },
-  modeButtonTextActive: {
-    color: '#ffffffff',
-  },
 });

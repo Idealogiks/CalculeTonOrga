@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface ManualTimeInputProps {
   startTime: Date;
@@ -18,6 +19,10 @@ export default function ManualTimeInput({
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
+  const cardColor = useThemeColor({}, 'card');         
+  const primaryColor = useThemeColor({}, 'primary');   
+  const secondaryColor = useThemeColor({}, 'secondary');
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
@@ -26,24 +31,28 @@ export default function ManualTimeInput({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: cardColor }]}>
       <View style={styles.timePickerRow}>
-        <Text style={styles.timeLabel}>Début</Text>
+        <Text style={[styles.timeLabel, { color: primaryColor }]}>Début</Text>
         <TouchableOpacity 
-          style={styles.timeButton}
+          style={[styles.timeButton, { backgroundColor: secondaryColor }]}
           onPress={() => setShowStartPicker(true)}
         >
-          <Text style={styles.timeText}>{formatTime(startTime)}</Text>
+          <Text style={[styles.timeText, { color: primaryColor }]}>
+            {formatTime(startTime)}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.timePickerRow}>
-        <Text style={styles.timeLabel}>Fin</Text>
+        <Text style={[styles.timeLabel, { color: primaryColor }]}>Fin</Text>
         <TouchableOpacity 
-          style={styles.timeButton}
+          style={[styles.timeButton, { backgroundColor: secondaryColor }]}
           onPress={() => setShowEndPicker(true)}
         >
-          <Text style={styles.timeText}>{formatTime(endTime)}</Text>
+          <Text style={[styles.timeText, { color: primaryColor }]}>
+            {formatTime(endTime)}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -78,11 +87,14 @@ export default function ManualTimeInput({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 20,
     marginVertical: 20,
     elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
   },
   timePickerRow: {
     flexDirection: 'row',
@@ -93,10 +105,8 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#7B68EE',
   },
   timeButton: {
-    backgroundColor: '#E8E5FF',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 15,
@@ -104,6 +114,5 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 24,
     fontWeight: '300',
-    color: '#7B68EE',
   },
 });
