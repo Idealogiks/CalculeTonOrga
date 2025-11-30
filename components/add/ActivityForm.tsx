@@ -3,6 +3,23 @@ import { View, TextInput, TouchableOpacity, ScrollView, Text, StyleSheet } from 
 import { Tag } from '@/services/database/types';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
+const darkenColor = (hex: string, amount: number) => {
+  let color = hex.replace('#', '');
+  if (color.length === 3) color = color.split('').map(c => c + c).join('');
+
+  const num = parseInt(color, 16);
+  let r = (num >> 16) - amount;
+  let g = ((num >> 8) & 0x00FF) - amount;
+  let b = (num & 0x0000FF) - amount;
+
+  return '#' + (
+    0x1000000 +
+    (r < 0 ? 0 : r) * 0x10000 +
+    (g < 0 ? 0 : g) * 0x100 +
+    (b < 0 ? 0 : b)
+  ).toString(16).slice(1);
+};
+
 interface ActivityFormProps {
   title: string;
   onTitleChange: (text: string) => void;
@@ -10,6 +27,7 @@ interface ActivityFormProps {
   selectedTag: number | null;
   onTagSelect: (tagId: number) => void;
   disabled?: boolean;
+  onAddCategoryPress: () => void;
 }
 
 export default function ActivityForm({
@@ -18,21 +36,18 @@ export default function ActivityForm({
   tags,
   selectedTag,
   onTagSelect,
-  disabled = false
+  disabled = false,
+  onAddCategoryPress
 }: ActivityFormProps) {
-  // 🎨 Couleurs dynamiques
+  
   const cardColor = useThemeColor({}, 'card');
   const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'primary');
-  const placeholderColor = '#999'; // Gris moyen, passe bien sur les deux modes
+  const placeholderColor = '#999';
 
   return (
     <View>
       <TextInput
-        style={[
-          styles.input, 
-          { backgroundColor: cardColor, color: textColor }
-        ]}
+        style={[styles.input, { backgroundColor: cardColor, color: textColor }]}
         placeholder="Titre de l'activité"
         placeholderTextColor={placeholderColor}
         value={title}
@@ -48,27 +63,28 @@ export default function ActivityForm({
         {tags.map(tag => {
           const isSelected = selectedTag === tag.id;
           
+          const backgroundColor = isSelected ? darkenColor(tag.color, 40) : tag.color;
+
           return (
             <TouchableOpacity
               key={tag.id}
               style={[
                 styles.tag,
                 { 
-                  // Si sélectionné : Couleur Primaire (Violet)
-                  // Sinon : La couleur du tag venant de la BDD
-                  backgroundColor: isSelected ? primaryColor : tag.color 
+                  backgroundColor: backgroundColor,
+                  transform: [{ scale: isSelected ? 1.05 : 1 }] 
                 }
               ]}
               onPress={() => onTagSelect(tag.id)}
               disabled={disabled}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <Text 
                 style={[
                   styles.tagText, 
-                  // Si sélectionné : Blanc
-                  // Sinon : Couleur du texte standard (Noir/Blanc selon le mode) ou Primaire selon tes goûts
-                  { color: isSelected ? 'white' : textColor } 
+                  { 
+                    color: isSelected ? 'white' : '#333' 
+                  } 
                 ]}
               >
                 {tag.name}
@@ -76,6 +92,15 @@ export default function ActivityForm({
             </TouchableOpacity>
           );
         })}
+
+        <TouchableOpacity
+          style={[styles.addTagButton, { borderColor: textColor }]}
+          onPress={onAddCategoryPress}
+          disabled={disabled}
+        >
+          <Text style={{ fontSize: 20, color: textColor, marginTop: -2 }}>+</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
@@ -83,14 +108,10 @@ export default function ActivityForm({
 
 const styles = StyleSheet.create({
   input: {
-    // backgroundColor géré dynamiquement
     borderRadius: 25,
     padding: 15,
     fontSize: 16,
-    // color géré dynamiquement
     marginBottom: 20,
-    
-    // Ombres
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -99,18 +120,29 @@ const styles = StyleSheet.create({
   },
   tagsScroll: { 
     flexDirection: 'row', 
-    paddingVertical: 5, 
-    marginBottom: 30 
+    paddingVertical: 10, 
+    marginBottom: 30,
+    alignItems: 'center' 
   },
   tag: { 
     paddingHorizontal: 20, 
     paddingVertical: 10, 
     borderRadius: 20, 
     marginRight: 10,
-    // Ajout d'une petite bordure invisible ou ombre si besoin pour détacher les tags clairs
   },
   tagText: { 
     fontSize: 14, 
-    fontWeight: '600' // Un peu plus gras pour la lisibilité
+    fontWeight: '600' 
   },
+  addTagButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 5,
+    backgroundColor: 'transparent'
+  }
 });
