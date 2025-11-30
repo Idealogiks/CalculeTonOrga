@@ -1,9 +1,10 @@
 import React from 'react';
 import { ScrollView, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useActivities } from '@/hooks/useActivities';
-import { useThemeColor } from '@/hooks/use-theme-color'; // ou '@/hooks/useThemeColor' selon ton fichier
+import { useThemeColor } from '@/hooks/use-theme-color'; 
 import { Stack } from 'expo-router'; 
 import { resetDatabase } from '@/services/database';
+import { useRouter } from 'expo-router';
 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
@@ -18,6 +19,7 @@ const formatDate = (date: string) =>
   });
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { activities, loading, refetch } = useActivities();
 
   const backgroundColor = useThemeColor({}, 'background');
@@ -36,14 +38,13 @@ export default function HomeScreen() {
           style: "destructive", 
           onPress: async () => {
             await resetDatabase();
-            refetch(); // On recharge la liste (qui sera vide)
+            refetch(); 
           }
         }
       ]
     );
   };
 
-  // ✅ On prépare le contenu principal en fonction de l'état
   const renderContent = () => {
     if (loading) {
       return (
@@ -68,25 +69,39 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {activities.map(activity => (
-          <View key={activity.id} style={[styles.card, { backgroundColor: cardColor }]}>
-            <View style={styles.headerRow}>
-              <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
-              {activity.tagName && (
-                <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
-                  <Text style={styles.tagText}>{activity.tagName}</Text>
-                </View>
-              )}
+          <TouchableOpacity 
+            key={activity.id}
+            activeOpacity={0.7}
+            onPress={() => router.push({
+                  pathname: "/activities/[id]", 
+                  params: { id: activity.id }  
+                })}
+          >
+            <View style={[styles.card, { backgroundColor: cardColor }]}>
+              
+              <View style={styles.headerRow}>
+                <Text style={[styles.title, { color: textColor }]}>
+                  {activity.title}
+                </Text>
+                
+                {activity.tagName && (
+                  <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
+                    <Text style={styles.tagText}>{activity.tagName}</Text>
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.infoRow}>
+                <Text style={[styles.duration, { color: subTextColor }]}>
+                  ⏱ {formatDuration(activity.duration)}
+                </Text>
+                <Text style={[styles.date, { color: subTextColor }]}>
+                  📅 {formatDate(activity.startTime)}
+                </Text>
+              </View>
+
             </View>
-            
-            <View style={styles.infoRow}>
-              <Text style={[styles.duration, { color: subTextColor }]}>
-                ⏱ {formatDuration(activity.duration)}
-              </Text>
-              <Text style={[styles.date, { color: subTextColor }]}>
-                📅 {formatDate(activity.startTime)}
-              </Text>
-            </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     );
@@ -94,7 +109,6 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      {/* ✅ C'est cette partie qui affichait la poubelle, elle manquait ! */}
       <Stack.Screen 
         options={{
           headerTitle: "Mes Activités",
@@ -106,7 +120,6 @@ export default function HomeScreen() {
         }} 
       />
 
-      {/* On affiche le contenu calculé au-dessus */}
       {renderContent()}
     </View>
   );

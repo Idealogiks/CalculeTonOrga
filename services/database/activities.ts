@@ -49,3 +49,22 @@ export const getActivitiesByDate = async (dateISO: string): Promise<Activity[]> 
   return rows;
 };
 
+export const getActivityById = async (id: number): Promise<Activity | null> => {
+  const db = await openDatabase();
+  const query = `
+    SELECT a.*, t.name as tagName, t.color as tagColor 
+    FROM activities a
+    LEFT JOIN tags t ON a.tagId = t.id
+    WHERE a.id = ?
+  `;
+  return await db.getFirstAsync<Activity>(query, [id]);
+};
+
+export const updateActivity = async (id: number, title: string, tagId: number): Promise<void> => {
+  const db = await openDatabase();
+  await db.runAsync(
+    'UPDATE activities SET title = ?, tagId = ? WHERE id = ?',
+    [title, tagId, id]
+  );
+};
+
