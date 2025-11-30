@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Alert } from "react-native";
 import * as db from '@/services/database';
 import { Tag } from '@/services/database/types';
@@ -17,13 +17,19 @@ export function useAddActivity() {
   const [manualStartTime, setManualStartTime] = useState(new Date());
   const [manualEndTime, setManualEndTime] = useState(new Date());
 
+  const loadTags = useCallback(() => {
+    db.getAllTags()
+      .then(setTags)
+      .catch(() => Alert.alert("Erreur", "Impossible de charger les tags"));
+  }, []);
+
   useEffect(() => {
     db.initDatabase()
-      .then(() => db.getAllTags())
-      .then(setTags)
-      .catch(() => Alert.alert("Erreur", "Impossible de charger les tags"))
+      .then(() => {
+        loadTags(); 
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, []); 
 
   const resetForm = () => {
     setIsRecording(false);
@@ -165,12 +171,11 @@ export function useAddActivity() {
     isManualMode,
     manualStartTime, setManualStartTime,
     manualEndTime, setManualEndTime,
-    
-    // Actions
     handleStartStop,
     handleValidate,
     handleCancel,
     handleTagPress,
-    handleModeSwitch
+    handleModeSwitch,
+    refreshTags: loadTags
   };
 }

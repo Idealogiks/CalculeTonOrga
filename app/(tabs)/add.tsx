@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 
+// Imports des composants
 import ActivityForm from '@/components/add/ActivityForm';
 import AutomaticTimer from '@/components/add/AutomaticTimer';
 import ManualTimeInput from '@/components/add/ManualTimeInput';
 import FloatingActionButtons from '@/components/add/FloatingActionButtons';
 import ModeSelector from '@/components/add/ModeSelector';
+import AddCategoryModal from '@/components/add/AddCategoryModal'; // ✅ Import du popup
 
+// Import de la logique
 import { useAddActivity } from '@/hooks/useAddActivity';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '@/hooks/use-theme-color'; // Attention au nom du fichier (useThemeColor ou use-theme-color selon ton fichier)
 
 export default function AddActivities() {
   const {
@@ -19,8 +22,12 @@ export default function AddActivities() {
     isManualMode, handleModeSwitch,
     manualStartTime, setManualStartTime,
     manualEndTime, setManualEndTime,
-    handleValidate, handleCancel
+    handleValidate, handleCancel,
+    refreshTags // ✅ On récupère la fonction pour recharger les tags
   } = useAddActivity();
+
+  // ✅ État local pour gérer l'ouverture/fermeture du popup
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -51,6 +58,7 @@ export default function AddActivities() {
           selectedTag={selectedTag}
           onTagSelect={handleTagPress}
           disabled={isRecording || elapsedTime > 0}
+          onAddCategoryPress={() => setModalVisible(true)}
         />
 
         {isManualMode ? (
@@ -78,6 +86,16 @@ export default function AddActivities() {
         onCancel={handleCancel}
         onValidate={handleValidate}
       />
+
+      {/* ✅ Le Pop-up de création de catégorie */}
+      <AddCategoryModal 
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSuccess={() => {
+          refreshTags(); // Recharge la liste des tags pour afficher le nouveau immédiatement
+        }}
+      />
+
     </KeyboardAvoidingView>
   );
 }

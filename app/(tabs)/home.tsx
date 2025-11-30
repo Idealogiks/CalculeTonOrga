@@ -1,7 +1,9 @@
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useActivities } from '@/hooks/useActivities';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '@/hooks/use-theme-color'; // ou '@/hooks/useThemeColor' selon ton fichier
+import { Stack } from 'expo-router'; 
+import { resetDatabase } from '@/services/database';
 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
@@ -16,58 +18,97 @@ const formatDate = (date: string) =>
   });
 
 export default function HomeScreen() {
-  const { activities, loading } = useActivities();
+  const { activities, loading, refetch } = useActivities();
 
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
   const textColor = useThemeColor({}, 'text');
-  const subTextColor = useThemeColor({}, 'icon'); 
+  const subTextColor = useThemeColor({}, 'icon');
 
-  if (loading) {
-    return (
-      <View style={[styles.center, { backgroundColor }]}>
-        <ActivityIndicator size="large" color={textColor} />
-        <Text style={[styles.loading, { color: subTextColor }]}>Chargement...</Text>
-      </View>
+  const handleResetPress = () => {
+    Alert.alert(
+      "Réinitialiser l'application ?",
+      "Cela effacera toutes tes activités et tes catégories personnalisées. Cette action est irréversible.",
+      [
+        { text: "Annuler", style: "cancel" },
+        { 
+          text: "Tout effacer", 
+          style: "destructive", 
+          onPress: async () => {
+            await resetDatabase();
+            refetch(); // On recharge la liste (qui sera vide)
+          }
+        }
+      ]
     );
-  }
+  };
 
-  if (activities.length === 0) {
+  // ✅ On prépare le contenu principal en fonction de l'état
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={textColor} />
+          <Text style={[styles.loading, { color: subTextColor }]}>Chargement...</Text>
+        </View>
+      );
+    }
+
+    if (activities.length === 0) {
+      return (
+        <View style={styles.center}>
+          <Text style={[styles.empty, { color: subTextColor }]}>Aucune activité enregistrée</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={[styles.center, { backgroundColor }]}>
-        <Text style={[styles.empty, { color: subTextColor }]}>Aucune activité enregistrée</Text>
-      </View>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {activities.map(activity => (
+          <View key={activity.id} style={[styles.card, { backgroundColor: cardColor }]}>
+            <View style={styles.headerRow}>
+              <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
+              {activity.tagName && (
+                <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
+                  <Text style={styles.tagText}>{activity.tagName}</Text>
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={[styles.duration, { color: subTextColor }]}>
+                ⏱ {formatDuration(activity.duration)}
+              </Text>
+              <Text style={[styles.date, { color: subTextColor }]}>
+                📅 {formatDate(activity.startTime)}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     );
-  }
+  };
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor }]} 
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {activities.map(activity => (
-        <View key={activity.id} style={[styles.card, { backgroundColor: cardColor }]}>
-          <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
-            {activity.tagName && (
-              <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
-                <Text style={styles.tagText}>{activity.tagName}</Text>
-              </View>
-            )}
-          </View>
-          
-          <View style={styles.infoRow}>
-            <Text style={[styles.duration, { color: subTextColor }]}>
-              ⏱ {formatDuration(activity.duration)}
-            </Text>
-            <Text style={[styles.date, { color: subTextColor }]}>
-              📅 {formatDate(activity.startTime)}
-            </Text>
-          </View>
-        </View>
-      ))}
-    </ScrollView>
+    <View style={[styles.container, { backgroundColor }]}>
+      {/* ✅ C'est cette partie qui affichait la poubelle, elle manquait ! */}
+      <Stack.Screen 
+        options={{
+          headerTitle: "Mes Activités",
+          headerRight: () => (
+            <TouchableOpacity onPress={handleResetPress} style={{ marginRight: 10, padding: 5 }}>
+              <Text style={{ fontSize: 20 }}>🗑️</Text>
+            </TouchableOpacity>
+          )
+        }} 
+      />
+
+      {/* On affiche le contenu calculé au-dessus */}
+      {renderContent()}
+    </View>
   );
 }
 

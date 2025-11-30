@@ -6,3 +6,16 @@ export const getAllTags = async (): Promise<Tag[]> => {
   const rows = await db.getAllAsync<Tag>('SELECT id, name, color FROM tags ORDER BY name');
   return rows || [];
 };
+
+export const createTag = async (name: string, color: string): Promise<void> => {
+  const db = await openDatabase();
+  await db.runAsync(
+    'INSERT INTO tags (name, color) VALUES (?, ?)',
+    [name, color]
+  );
+};
+
+export const deleteActivity = async (id: number): Promise<void> => {
+  const db = await openDatabase();
+  await db.runAsync('DELETE FROM activities WHERE id = ?', [id]);
+};

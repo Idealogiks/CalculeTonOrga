@@ -38,11 +38,8 @@ export const initDatabase = async (): Promise<void> => {
 
     const defaultTags = [
       { name: 'Repos', color: '#E8E5FF' },
-      { name: 'Ménage', color: '#FFE5E5' },
       { name: 'Travail', color: '#E5F0FF' },
       { name: 'Lecture', color: '#E5FFE5' },
-      { name: 'Sport', color: '#FFF5E5' },
-      { name: 'Dodo', color: '#F5E5FF' }
     ];
 
     for (const t of defaultTags) {
@@ -55,6 +52,23 @@ export const initDatabase = async (): Promise<void> => {
     console.log('Database fonctionne');
   } catch (error) {
     console.error('Database fonctionne pas:', error);
+    throw error;
+  }
+};
+export const resetDatabase = async (): Promise<void> => {
+  const db = await openDatabase();
+  try {
+    console.log("⏳ Début de la réinitialisation...");
+
+    await db.execAsync('DROP TABLE IF EXISTS activities');
+
+    await db.execAsync('DROP TABLE IF EXISTS tags');
+
+    await initDatabase();
+    
+    console.log("✅ Base de données remise à neuf (Catégories par défaut restaurées)");
+  } catch (error) {
+    console.error("❌ Erreur lors du reset:", error);
     throw error;
   }
 };
