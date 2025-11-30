@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useActivities } from '@/hooks/useActivities';
 import { useThemeColor } from '@/hooks/use-theme-color'; 
 import { Stack, useRouter } from 'expo-router'; 
-import { resetDatabase } from '@/services/database';
+import { resetDatabase, getAllTags } from '@/services/database'; 
 import WeekCalendar from '@/components/home/WeekCalendar';
 import { isSameDay, parseISO } from 'date-fns';
+import { Tag } from '@/services/database/types';
 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
@@ -22,16 +23,26 @@ const formatDate = (date: string) =>
 export default function HomeScreen() {
   const router = useRouter();
   const { activities, loading, refetch } = useActivities();
+  
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
 
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
   const textColor = useThemeColor({}, 'text');
   const subTextColor = useThemeColor({}, 'icon');
+  const primaryColor = useThemeColor({}, 'primary');
 
-  const filteredActivities = activities.filter(activity => 
-    isSameDay(parseISO(activity.startTime), selectedDate)
-  );
+  useEffect(() => {
+    getAllTags().then(setTags).catch(console.error);
+  }, []);
+
+  const filteredActivities = activities.filter(activity => {
+    const matchesDate = isSameDay(parseISO(activity.startTime), selectedDate);
+    const matchesCategory = selectedTagId === null || activity.tagId === selectedTagId;
+    return matchesDate && matchesCategory;
+  });
 
   const handleResetPress = () => {
     Alert.alert(
@@ -45,6 +56,7 @@ export default function HomeScreen() {
           onPress: async () => {
             await resetDatabase();
             refetch(); 
+            getAllTags().then(setTags);
           }
         }
       ]
@@ -65,7 +77,7 @@ export default function HomeScreen() {
       return (
         <View style={styles.center}>
           <Text style={[styles.empty, { color: subTextColor }]}>
-            Rien de prévu pour ce jour 😴
+            Rien
           </Text>
         </View>
       );
@@ -117,10 +129,63 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
+      <Stack.Screen 
+        options={{
+          headerTitle: "", 
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor },
+          headerRight: () => (
+            <TouchableOpacity onPress={handleResetPress} style={{ marginRight: 10, padding: 5 }}>
+              <Text style={{ fontSize: 20 }}>🗑️</Text>
+            </TouchableOpacity>
+          )
+        }} 
+      />
+
       <WeekCalendar 
         selectedDate={selectedDate} 
         onDateSelect={setSelectedDate} 
       />
+
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              selectedTagId === null ? { backgroundColor: primaryColor } : { backgroundColor: cardColor, borderWidth: 1, borderColor: '#eee' }
+            ]}
+            onPress={() => setSelectedTagId(null)}
+          >
+            <Text style={[
+              styles.filterText,
+              { color: selectedTagId === null ? 'white' : textColor }
+            ]}>
+              Tous
+            </Text>
+          </TouchableOpacity>
+
+          {tags.map(tag => {
+            const isSelected = selectedTagId === tag.id;
+            return (
+              <TouchableOpacity
+                key={tag.id}
+                style={[
+                  styles.filterChip,
+                  isSelected ? { backgroundColor: tag.color } : { backgroundColor: cardColor, borderWidth: 1, borderColor: '#eee' }
+                ]}
+                onPress={() => setSelectedTagId(isSelected ? null : tag.id)}
+              >
+                <Text style={[
+                  styles.filterText,
+                  { color: isSelected ? 'white' : textColor }
+                ]}>
+                  {tag.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {renderContent()}
     </View>
@@ -134,6 +199,28 @@ const styles = StyleSheet.create({
   loading: { fontSize: 16, marginTop: 10 },
   empty: { fontSize: 16, textAlign: 'center', marginTop: 50 },
   
+  filterContainer: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
+  },
+  filterScroll: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
   card: {
     borderRadius: 16,
     padding: 16,

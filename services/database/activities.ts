@@ -14,10 +14,10 @@ export const createActivity = async (payload: {
     `INSERT INTO activities (title, startTime, endTime, duration, isManual, tagId)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [
-      payload.title,
+      payload.title || "Activité", 
       payload.startTime,
       payload.endTime,
-      payload.duration,
+      payload.duration || 0,
       payload.isManual ? 1 : 0,
       payload.tagId ?? null 
     ]
