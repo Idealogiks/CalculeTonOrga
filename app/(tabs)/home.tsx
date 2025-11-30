@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
-import { getAllActivities } from '@/services/database';
-import { Activity } from '@/services/database/types';
+import React from 'react';
+import { ScrollView, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useActivities } from '@/hooks/useActivities';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
-
-//ToDo : les données ne se réinitialisent pas forcément quand on retourne sur le menu, régler 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
   const sec = seconds % 60;
@@ -13,54 +11,60 @@ const formatDuration = (seconds: number) => {
 
 const formatDate = (date: string) => 
   new Date(date).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
 
 export default function HomeScreen() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { activities, loading } = useActivities();
 
-  useEffect(() => {
-    getAllActivities()
-      .then(setActivities)
-      .catch(err => console.error("Erreur chargement:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  const backgroundColor = useThemeColor({}, 'background');
+  const cardColor = useThemeColor({}, 'card');
+  const textColor = useThemeColor({}, 'text');
+  const subTextColor = useThemeColor({}, 'icon'); 
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.loading}>Chargement</Text>
+      <View style={[styles.center, { backgroundColor }]}>
+        <ActivityIndicator size="large" color={textColor} />
+        <Text style={[styles.loading, { color: subTextColor }]}>Chargement...</Text>
       </View>
     );
   }
 
   if (activities.length === 0) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.empty}>Aucune activité enregistrée</Text>
+      <View style={[styles.center, { backgroundColor }]}>
+        <Text style={[styles.empty, { color: subTextColor }]}>Aucune activité enregistrée</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor }]} 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {activities.map(activity => (
-        <View key={activity.id} style={styles.card}>
-          <Text style={styles.title}>{activity.title}</Text>
+        <View key={activity.id} style={[styles.card, { backgroundColor: cardColor }]}>
+          <View style={styles.headerRow}>
+            <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
+            {activity.tagName && (
+              <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
+                <Text style={styles.tagText}>{activity.tagName}</Text>
+              </View>
+            )}
+          </View>
           
-          {activity.tagName && (
-            <View style={[styles.tag, { backgroundColor: activity.tagColor }]}>
-              <Text style={styles.tagText}>{activity.tagName}</Text>
-            </View>
-          )}
-          
-          <Text style={styles.duration}>{formatDuration(activity.duration)}</Text>
-          <Text style={styles.date}>{formatDate(activity.startTime)}</Text>
+          <View style={styles.infoRow}>
+            <Text style={[styles.duration, { color: subTextColor }]}>
+              ⏱ {formatDuration(activity.duration)}
+            </Text>
+            <Text style={[styles.date, { color: subTextColor }]}>
+              📅 {formatDate(activity.startTime)}
+            </Text>
+          </View>
         </View>
       ))}
     </ScrollView>
@@ -68,27 +72,49 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F7' },
+  container: { flex: 1 },
   content: { padding: 20 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  loading: { fontSize: 16, color: '#666' },
-  empty: { fontSize: 16, color: '#666', textAlign: 'center' },
+  loading: { fontSize: 16, marginTop: 10 },
+  empty: { fontSize: 16, textAlign: 'center' },
+  
   card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3.84,
     elevation: 2,
   },
-  title: { fontSize: 16, fontWeight: '600', marginBottom: 6, color: '#000' },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  title: { 
+    fontSize: 17, 
+    fontWeight: '600', 
+    flex: 1, 
+    marginRight: 10 
+  },
   tag: { 
     paddingHorizontal: 10, 
     paddingVertical: 4, 
     borderRadius: 12, 
-    alignSelf: 'flex-start', 
-    marginBottom: 6 
   },
-  tagText: { fontSize: 12, fontWeight: '500', color: '#333' },
-  duration: { fontSize: 14, color: '#666', marginBottom: 4 },
-  date: { fontSize: 12, color: '#999' },
+  tagText: { 
+    fontSize: 12, 
+    fontWeight: '600', 
+    color: '#333' 
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  duration: { fontSize: 14, fontWeight: '500' },
+  date: { fontSize: 12 },
 });
