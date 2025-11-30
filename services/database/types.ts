@@ -5,9 +5,9 @@ export interface Activity {
   endTime: string;
   duration: number;
   isManual: boolean;
-  tagId: number;
-  createdAt: string;
-  tagName?: string;
+  tagId: number | null; 
+  location?: string | null; 
+  tagName?: string;  
   tagColor?: string;
 }
 
@@ -17,14 +17,15 @@ export interface CreateActivityPayload {
   endTime: string;
   duration: number;
   isManual: boolean;
-  tagId: number;
+  tagId: number | null; 
+  location?: string | null;
 }
 
 export interface Tag {
   id: number;
   name: string;
   color: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface CreateTagPayload {

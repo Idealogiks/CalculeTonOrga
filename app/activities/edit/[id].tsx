@@ -15,6 +15,7 @@ export default function EditActivity() {
   
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
+  const [location, setLocation] = useState(''); 
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -39,6 +40,7 @@ export default function EditActivity() {
       }
 
       setTitle(activityData.title);
+      setLocation(activityData.location || ''); 
       setSelectedTag(activityData.tagId);
       setTags(tagsData);
     } catch (e) {
@@ -65,7 +67,7 @@ export default function EditActivity() {
     }
 
     try {
-      await db.updateActivity(Number(id), title, selectedTag);
+      await db.updateActivity(Number(id), title, selectedTag, location);
       router.back(); 
     } catch (e) {
       Alert.alert("Erreur", "La modification a échoué");
@@ -110,6 +112,8 @@ export default function EditActivity() {
       <ActivityForm
         title={title}
         onTitleChange={setTitle}
+        location={location}       
+        onLocationChange={setLocation} 
         tags={tags}
         selectedTag={selectedTag}
         onTagSelect={setSelectedTag}

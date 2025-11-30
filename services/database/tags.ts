@@ -14,8 +14,3 @@ export const createTag = async (name: string, color: string): Promise<void> => {
     [name, color]
   );
 };
-
-export const deleteActivity = async (id: number): Promise<void> => {
-  const db = await openDatabase();
-  await db.runAsync('DELETE FROM activities WHERE id = ?', [id]);
-};

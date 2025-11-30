@@ -5,6 +5,7 @@ import { Tag } from '@/services/database/types';
 
 export function useAddActivity() {
   const [title, setTitle] = useState("");
+  const [location, setLocation] = useState(""); 
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export function useAddActivity() {
     setStartTime(null);
     setElapsedTime(0);
     setTitle("");
+    setLocation("");
     setSelectedTag(null);
     setManualStartTime(new Date());
     setManualEndTime(new Date());
@@ -107,6 +109,7 @@ export function useAddActivity() {
     try {
       await db.createActivity({
         title: activityName,
+        location: location, 
         startTime: activityStartTime.toISOString(),
         endTime: activityEndTime.toISOString(),
         duration: totalDuration,
@@ -163,6 +166,7 @@ export function useAddActivity() {
 
   return {
     title, setTitle,
+    location, setLocation,
     selectedTag,
     tags,
     loading,

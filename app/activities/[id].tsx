@@ -73,6 +73,13 @@ export default function ActivityDetails() {
 
       <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
 
+      {activity.location ? (
+        <View style={styles.locationRow}>
+          <AntDesign name="environment" size={18} color={subTextColor} style={{ marginRight: 5 }} />
+          <Text style={[styles.locationText, { color: subTextColor }]}>{activity.location}</Text>
+        </View>
+      ) : null}
+
       {activity.tagName && (
         <View style={[styles.tagContainer, { backgroundColor: activity.tagColor || '#ccc' }]}>
           <Text style={styles.tagText}>{activity.tagName}</Text>
@@ -99,7 +106,6 @@ export default function ActivityDetails() {
         </View>
       </View>
 
-      {/* Horaires détaillés */}
       <View style={[styles.detailsCard, { backgroundColor: cardColor }]}>
         <View style={styles.row}>
           <Text style={[styles.label, { color: subTextColor }]}>Début</Text>
@@ -124,7 +130,16 @@ export default function ActivityDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 15 },
+  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 10 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  locationText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
   tagContainer: { 
     alignSelf: 'flex-start', 
     paddingHorizontal: 15, 

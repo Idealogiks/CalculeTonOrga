@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, Text, StyleSheet } from 'react-native';
 import { Tag } from '@/services/database/types';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const darkenColor = (hex: string, amount: number) => {
   let color = hex.replace('#', '');
@@ -23,6 +24,8 @@ const darkenColor = (hex: string, amount: number) => {
 interface ActivityFormProps {
   title: string;
   onTitleChange: (text: string) => void;
+  location: string;
+  onLocationChange: (text: string) => void; 
   tags: Tag[];
   selectedTag: number | null;
   onTagSelect: (tagId: number) => void;
@@ -33,6 +36,8 @@ interface ActivityFormProps {
 export default function ActivityForm({
   title,
   onTitleChange,
+  location,
+  onLocationChange,
   tags,
   selectedTag,
   onTagSelect,
@@ -55,6 +60,18 @@ export default function ActivityForm({
         editable={!disabled}
       />
 
+      <View style={[styles.inputContainer, { backgroundColor: cardColor }]}>
+        <AntDesign name="environment" size={20} color={placeholderColor} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.inputWithIcon, { color: textColor }]}
+          placeholder="Ajouter un lieu..."
+          placeholderTextColor={placeholderColor}
+          value={location}
+          onChangeText={onLocationChange}
+          editable={!disabled}
+        />
+      </View>
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -62,7 +79,6 @@ export default function ActivityForm({
       >
         {tags.map(tag => {
           const isSelected = selectedTag === tag.id;
-          
           const backgroundColor = isSelected ? darkenColor(tag.color, 40) : tag.color;
 
           return (
@@ -72,7 +88,7 @@ export default function ActivityForm({
                 styles.tag,
                 { 
                   backgroundColor: backgroundColor,
-                  transform: [{ scale: isSelected ? 1.05 : 1 }] 
+                  transform: [{ scale: isSelected ? 1.05 : 1 }]
                 }
               ]}
               onPress={() => onTagSelect(tag.id)}
@@ -82,9 +98,7 @@ export default function ActivityForm({
               <Text 
                 style={[
                   styles.tagText, 
-                  { 
-                    color: isSelected ? 'white' : '#333' 
-                  } 
+                  { color: isSelected ? 'white' : '#333' } 
                 ]}
               >
                 {tag.name}
@@ -111,12 +125,32 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 15,
     fontSize: 16,
-    marginBottom: 20,
-    elevation: 3,
+    marginBottom: 15,
+    elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  inputWithIcon: {
+    flex: 1,
+    paddingVertical: 15,
+    fontSize: 16,
   },
   tagsScroll: { 
     flexDirection: 'row', 
