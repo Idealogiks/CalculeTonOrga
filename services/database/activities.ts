@@ -4,7 +4,7 @@ import { openDatabase } from './init';
 export const createActivity = async (payload: {
   title: string;
   duration: number;
-  tagId: number;
+  tagId: number | null; 
   startTime: string;
   endTime: string;
   isManual: boolean;
@@ -19,7 +19,7 @@ export const createActivity = async (payload: {
       payload.endTime,
       payload.duration,
       payload.isManual ? 1 : 0,
-      payload.tagId
+      payload.tagId ?? null 
     ]
   );
   return res.lastInsertRowId;
@@ -60,11 +60,30 @@ export const getActivityById = async (id: number): Promise<Activity | null> => {
   return await db.getFirstAsync<Activity>(query, [id]);
 };
 
-export const updateActivity = async (id: number, title: string, tagId: number): Promise<void> => {
+export const updateActivity = async (id: number, title: string, tagId: number | null): Promise<void> => {
   const db = await openDatabase();
   await db.runAsync(
     'UPDATE activities SET title = ?, tagId = ? WHERE id = ?',
-    [title, tagId, id]
+    [
+      title || "Activité", 
+      tagId ?? null, 
+      id
+    ]
   );
+};
+
+export const deleteActivity = async (id: number): Promise<void> => {
+  const db = await openDatabase();
+  await db.runAsync('DELETE FROM activities WHERE id = ?', [id]);
+};
+
+export const getDatesWithActivities = async (): Promise<string[]> => {
+  const db = await openDatabase();
+  const result = await db.getAllAsync<{ dateStr: string }>(`
+    SELECT DISTINCT substr(startTime, 1, 10) as dateStr 
+    FROM activities
+  `);
+  
+  return result.map(row => row.dateStr);
 };
 

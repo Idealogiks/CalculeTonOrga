@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useActivities } from '@/hooks/useActivities';
 import { useThemeColor } from '@/hooks/use-theme-color'; 
-import { Stack } from 'expo-router'; 
+import { Stack, useRouter } from 'expo-router'; 
 import { resetDatabase } from '@/services/database';
-import { useRouter } from 'expo-router';
+import WeekCalendar from '@/components/home/WeekCalendar';
+import { isSameDay, parseISO } from 'date-fns';
 
 const formatDuration = (seconds: number) => {
   const min = Math.floor(seconds / 60);
@@ -21,16 +22,21 @@ const formatDate = (date: string) =>
 export default function HomeScreen() {
   const router = useRouter();
   const { activities, loading, refetch } = useActivities();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
   const textColor = useThemeColor({}, 'text');
   const subTextColor = useThemeColor({}, 'icon');
 
+  const filteredActivities = activities.filter(activity => 
+    isSameDay(parseISO(activity.startTime), selectedDate)
+  );
+
   const handleResetPress = () => {
     Alert.alert(
       "Réinitialiser l'application ?",
-      "Cela effacera toutes tes activités et tes catégories personnalisées. Cette action est irréversible.",
+      "Cela effacera toutes tes activités et tes catégories personnalisées.",
       [
         { text: "Annuler", style: "cancel" },
         { 
@@ -55,10 +61,12 @@ export default function HomeScreen() {
       );
     }
 
-    if (activities.length === 0) {
+    if (filteredActivities.length === 0) {
       return (
         <View style={styles.center}>
-          <Text style={[styles.empty, { color: subTextColor }]}>Aucune activité enregistrée</Text>
+          <Text style={[styles.empty, { color: subTextColor }]}>
+            Rien de prévu pour ce jour 😴
+          </Text>
         </View>
       );
     }
@@ -68,7 +76,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {activities.map(activity => (
+        {filteredActivities.map(activity => (
           <TouchableOpacity 
             key={activity.id}
             activeOpacity={0.7}
@@ -109,15 +117,9 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Stack.Screen 
-        options={{
-          headerTitle: "Mes Activités",
-          headerRight: () => (
-            <TouchableOpacity onPress={handleResetPress} style={{ marginRight: 10, padding: 5 }}>
-              <Text style={{ fontSize: 20 }}>🗑️</Text>
-            </TouchableOpacity>
-          )
-        }} 
+      <WeekCalendar 
+        selectedDate={selectedDate} 
+        onDateSelect={setSelectedDate} 
       />
 
       {renderContent()}
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   loading: { fontSize: 16, marginTop: 10 },
-  empty: { fontSize: 16, textAlign: 'center' },
+  empty: { fontSize: 16, textAlign: 'center', marginTop: 50 },
   
   card: {
     borderRadius: 16,
