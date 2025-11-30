@@ -26,6 +26,7 @@ export default function WeekCalendar({ selectedDate, onDateSelect }: WeekCalenda
   const insets = useSafeAreaInsets();
   
   const [markedDates, setMarkedDates] = useState<{[key: string]: any}>({});
+  const [activeDatesList, setActiveDatesList] = useState<string[]>([]);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   
   const calendarHeight = useSharedValue(0);
@@ -43,6 +44,7 @@ export default function WeekCalendar({ selectedDate, onDateSelect }: WeekCalenda
   const loadMarks = async () => {
     try {
       const dates = (db as any).getDatesWithActivities ? await (db as any).getDatesWithActivities() : [];
+      setActiveDatesList(dates); 
       const marks: any = {};
 
       dates.forEach((date: string) => {
@@ -96,18 +98,34 @@ export default function WeekCalendar({ selectedDate, onDateSelect }: WeekCalenda
     return (
       <Animated.View style={[styles.weekRow, weekStyle]}>
         {weekDays.map((day, index) => {
+          const dayStr = format(day, 'yyyy-MM-dd');
           const isSelected = isSameDay(day, selectedDate);
+          const hasActivity = activeDatesList.includes(dayStr);
           
+          let bgColor;
+          let txtColor;
+
+          if (isSelected) {
+            bgColor = '#D4D4FF'; 
+            txtColor = '#000';   
+          } else if (hasActivity) {
+            bgColor = secondaryColor;
+            txtColor = '#333';
+          } else {
+            bgColor = '#F8F8F8'; 
+            txtColor = '#333';
+          }
+
           return (
             <TouchableOpacity 
               key={index} 
               style={[
                 styles.dayContainer, 
-                { backgroundColor: isSelected ? '#D4D4FF' : '#F8F8F8' }
+                { backgroundColor: bgColor }
               ]}
               onPress={() => onDateSelect(day)}
             >
-              <Text style={[styles.dayText, { color: isSelected ? '#000' : '#333' }]}>
+              <Text style={[styles.dayText, { color: txtColor }]}>
                 {format(day, 'd')}
               </Text>
             </TouchableOpacity>
