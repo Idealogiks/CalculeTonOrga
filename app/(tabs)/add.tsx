@@ -47,9 +47,9 @@ export default function AddActivities() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <WeekCalendar 
-         selectedDate={selectedDate} 
-         onDateSelect={setSelectedDate} 
-       />
+        selectedDate={selectedDate} 
+        onDateSelect={setSelectedDate} 
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -77,6 +77,7 @@ export default function AddActivities() {
           />
         ) : (
           <AutomaticTimer
+            key={isRecording ? 'recording' : `paused-${elapsedTime}`}
             isRecording={isRecording}
             elapsedTime={elapsedTime}
             onStartStop={handleStartStop}

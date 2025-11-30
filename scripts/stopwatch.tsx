@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface StopwatchProps {
   isRunning?: boolean;
@@ -7,8 +8,13 @@ interface StopwatchProps {
   onReset?: () => void;
 }
 
-export default function Stopwatch({ isRunning = false, onReset }: StopwatchProps) {
-  const [time, setTime] = useState(0);
+export default function Stopwatch({ isRunning = false, initialTime = 0, onReset }: StopwatchProps) {
+  const [time, setTime] = useState(initialTime);
+  const textColor = useThemeColor({}, 'primary'); 
+
+  useEffect(() => {
+    setTime(initialTime);
+  }, [initialTime]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -17,13 +23,10 @@ export default function Stopwatch({ isRunning = false, onReset }: StopwatchProps
       interval = setInterval(() => {
         setTime(prevTime => prevTime + 1);
       }, 1000);
-    } else {
-      setTime(0);
-      onReset?.();
-    }
+    } 
 
     return () => clearInterval(interval);
-  }, [isRunning, onReset]);
+  }, [isRunning]);
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -37,7 +40,7 @@ export default function Stopwatch({ isRunning = false, onReset }: StopwatchProps
 
   return (
     <View style={styles.container}>
-      <Text style={styles.time}>{formatTime(time)}</Text>
+      <Text style={[styles.time, { color: textColor }]}>{formatTime(time)}</Text>
     </View>
   );
 }
@@ -49,7 +52,6 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 56,
     fontWeight: '300',
-    color: '#7B68EE',
     letterSpacing: 2,
   },
 });

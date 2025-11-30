@@ -17,7 +17,7 @@ export default function AutomaticTimer({
   const cardColor = useThemeColor({}, 'card');      
   const primaryColor = useThemeColor({}, 'primary');
   
-  const stopColor = '#FF6B6B'; 
+  const stopColor = '#c4b8d8ff'; 
 
   return (
     <>
