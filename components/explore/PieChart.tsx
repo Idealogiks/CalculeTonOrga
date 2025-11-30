@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, G } from 'react-native-svg';
+import Svg, { Path, G, Circle } from 'react-native-svg'; 
 import { CategoryStat } from '@/hooks/useStatistics';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -17,6 +17,18 @@ export default function PieChart({ data }: PieChartProps) {
   
   let startAngle = 0;
   const arcs = data.map((item, index) => {
+    if (item.percentage >= 99.9) {
+      return (
+        <Circle
+          key={item.name}
+          cx={center}
+          cy={center}
+          r={radius}
+          fill={item.color}
+        />
+      );
+    }
+
     const angle = (item.percentage / 100) * 360;
     const endAngle = startAngle + angle;
 
