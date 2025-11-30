@@ -5,10 +5,12 @@ import { Tag } from '@/services/database/types';
 
 export function useAddActivity() {
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState(""); 
+  const [location, setLocation] = useState("");
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   const [isRecording, setIsRecording] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -30,7 +32,7 @@ export function useAddActivity() {
         loadTags(); 
       })
       .finally(() => setLoading(false));
-  }, []); 
+  }, []);
 
   const resetForm = () => {
     setIsRecording(false);
@@ -39,6 +41,7 @@ export function useAddActivity() {
     setTitle("");
     setLocation("");
     setSelectedTag(null);
+    setSelectedDate(new Date()); 
     setManualStartTime(new Date());
     setManualEndTime(new Date());
   };
@@ -73,8 +76,15 @@ export function useAddActivity() {
     let activityEndTime: Date;
 
     if (isManualMode) {
-      activityStartTime = new Date(manualStartTime);
-      activityEndTime = new Date(manualEndTime);
+      activityStartTime = new Date(selectedDate);
+      activityStartTime.setHours(manualStartTime.getHours());
+      activityStartTime.setMinutes(manualStartTime.getMinutes());
+      activityStartTime.setSeconds(0);
+
+      activityEndTime = new Date(selectedDate);
+      activityEndTime.setHours(manualEndTime.getHours());
+      activityEndTime.setMinutes(manualEndTime.getMinutes());
+      activityEndTime.setSeconds(0);
 
       if (activityEndTime.getTime() < activityStartTime.getTime()) {
         activityEndTime.setDate(activityEndTime.getDate() + 1);
@@ -109,7 +119,7 @@ export function useAddActivity() {
     try {
       await db.createActivity({
         title: activityName,
-        location: location, 
+        location: location,
         startTime: activityStartTime.toISOString(),
         endTime: activityEndTime.toISOString(),
         duration: totalDuration,
@@ -133,19 +143,14 @@ export function useAddActivity() {
   };
 
   const handleCancel = () => {
-    Alert.alert(
-      "Annuler l'activité",
-      "Voulez-vous vraiment annuler cette activité ?",
-      [
-        { text: "Non", style: "cancel" },
-        { text: "Oui", style: "destructive", onPress: resetForm }
-      ]
-    );
+    Alert.alert("Annuler", "Voulez-vous annuler ?", [
+      { text: "Non", style: "cancel" },
+      { text: "Oui", style: "destructive", onPress: resetForm }
+    ]);
   };
 
   const handleTagPress = (tagId: number) => {
     if (isRecording || elapsedTime > 0) return;
-    
     if (selectedTag === tagId) {
       setSelectedTag(null);
       setTitle("");
@@ -169,6 +174,7 @@ export function useAddActivity() {
     location, setLocation,
     selectedTag,
     tags,
+    selectedDate, setSelectedDate,
     loading,
     isRecording,
     elapsedTime,

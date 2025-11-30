@@ -1,32 +1,32 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 
-// Imports des composants
 import ActivityForm from '@/components/add/ActivityForm';
 import AutomaticTimer from '@/components/add/AutomaticTimer';
 import ManualTimeInput from '@/components/add/ManualTimeInput';
 import FloatingActionButtons from '@/components/add/FloatingActionButtons';
 import ModeSelector from '@/components/add/ModeSelector';
-import AddCategoryModal from '@/components/add/AddCategoryModal'; // ✅ Import du popup
+import AddCategoryModal from '@/components/add/AddCategoryModal'; 
+import WeekCalendar from '@/components/home/WeekCalendar'; 
 
-// Import de la logique
 import { useAddActivity } from '@/hooks/useAddActivity';
-import { useThemeColor } from '@/hooks/use-theme-color'; // Attention au nom du fichier (useThemeColor ou use-theme-color selon ton fichier)
+import { useThemeColor } from '@/hooks/use-theme-color'; 
 
 export default function AddActivities() {
   const {
     title, setTitle,
+    location, setLocation, 
     selectedTag, handleTagPress, tags,
+    selectedDate, setSelectedDate, 
     loading,
     isRecording, elapsedTime, handleStartStop,
     isManualMode, handleModeSwitch,
     manualStartTime, setManualStartTime,
     manualEndTime, setManualEndTime,
     handleValidate, handleCancel,
-    refreshTags // ✅ On récupère la fonction pour recharger les tags
+    refreshTags 
   } = useAddActivity();
 
-  // ✅ État local pour gérer l'ouverture/fermeture du popup
   const [isModalVisible, setModalVisible] = useState(false);
 
   const backgroundColor = useThemeColor({}, 'background');
@@ -46,6 +46,11 @@ export default function AddActivities() {
       style={[styles.container, { backgroundColor }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <WeekCalendar 
+         selectedDate={selectedDate} 
+         onDateSelect={setSelectedDate} 
+       />
+
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -54,6 +59,8 @@ export default function AddActivities() {
         <ActivityForm
           title={title}
           onTitleChange={setTitle}
+          location={location} 
+          onLocationChange={setLocation}
           tags={tags}
           selectedTag={selectedTag}
           onTagSelect={handleTagPress}
@@ -87,12 +94,11 @@ export default function AddActivities() {
         onValidate={handleValidate}
       />
 
-      {/* ✅ Le Pop-up de création de catégorie */}
       <AddCategoryModal 
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onSuccess={() => {
-          refreshTags(); // Recharge la liste des tags pour afficher le nouveau immédiatement
+          refreshTags();
         }}
       />
 
@@ -103,5 +109,5 @@ export default function AddActivities() {
 const styles = StyleSheet.create({
   container: { flex: 1 }, 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 100 },
+  content: { padding: 20, paddingBottom: 100 },
 });
