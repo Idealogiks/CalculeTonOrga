@@ -14,8 +14,8 @@ export default function ExploreScreen() {
   const { 
     loading, 
     selectedDate, setSelectedDate, 
-    dailySleep, dailyWork, dailyPie, periodChartData, 
-    globalAvgSleep, globalAvgWork, globalPie, 
+    dailyStats, dailyPie, periodChartData, 
+    globalStats, globalPie, 
     refresh 
   } = useStatistics();
 
@@ -45,10 +45,12 @@ export default function ExploreScreen() {
 
   const dateLabel = format(selectedDate, "d MMMM", { locale: fr });
 
+  const activeDailyStats = dailyStats.filter(stat => stat.value >= 60);
+  const activeGlobalStats = globalStats.filter(stat => stat.value >= 60);
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
       
-      {/* 1. CALENDRIER */}
       <WeekCalendar 
         selectedDate={selectedDate} 
         onDateSelect={setSelectedDate} 
@@ -56,28 +58,25 @@ export default function ExploreScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
-        {/* --- SECTION JOUR SÉLECTIONNÉ --- */}
         <Text style={[styles.sectionHeaderTitle, { color: textColor }]}>
           Zoom sur le <Text style={{ fontWeight: 'bold', color: '#6464B3' }}>{dateLabel}</Text>
         </Text>
         
-        {/* Cartes Résumé Jour */}
-        <View style={styles.cardsRow}>
-          <StatCard 
-            title="Sommeil" 
-            value={formatDuration(dailySleep)} 
-            subtitle="cette nuit-là"
-            color="#6464B3"
-          />
-          <StatCard 
-            title="Travail" 
-            value={formatDuration(dailyWork)} 
-            subtitle="ce jour-là"
-            color="#FF9F43"
-          />
+        <View style={styles.gridContainer}>
+          {activeDailyStats.length > 0 ? (
+            activeDailyStats.map(stat => (
+              <StatCard 
+                key={stat.id}
+                title={stat.label}
+                value={formatDuration(stat.value)}
+                color={stat.color}
+              />
+            ))
+          ) : (
+             <Text style={styles.noDataText}>Aucune activité ce jour-là</Text>
+          )}
         </View>
 
-        {/* Camembert Jour */}
         {dailyPie.length > 0 ? (
           <View style={[styles.section, { backgroundColor: cardColor }]}>
             <View style={styles.sectionHeader}>
@@ -85,11 +84,8 @@ export default function ExploreScreen() {
             </View>
             <PieChart data={dailyPie} />
           </View>
-        ) : (
-          <Text style={styles.noDataText}>Aucune activité ce jour-là</Text>
-        )}
+        ) : null} 
 
-        {/* Graphique Semaine */}
         <View style={[styles.section, { backgroundColor: cardColor }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: textColor }]}>Contexte Hebdomadaire</Text>
@@ -98,29 +94,27 @@ export default function ExploreScreen() {
         </View>
 
 
-        {/* --- SECTION MOYENNES GLOBALES --- */}
         <View style={styles.divider} />
         <Text style={[styles.sectionHeaderTitle, { color: textColor }]}>
           Moyennes Globales
         </Text>
-        <Text style={styles.headerSubtitle}>Depuis le début</Text>
+        <Text style={styles.headerSubtitle}>Moyenne par jour depuis le début</Text>
 
-        <View style={styles.cardsRow}>
-          <StatCard 
-            title="Moyenne Sommeil" 
-            value={formatDuration(globalAvgSleep)} 
-            subtitle="par jour"
-            color="#888"
-          />
-          <StatCard 
-            title="Moyenne Travail" 
-            value={formatDuration(globalAvgWork)} 
-            subtitle="par jour"
-            color="#888"
-          />
+        <View style={styles.gridContainer}>
+          {activeGlobalStats.length > 0 ? (
+            activeGlobalStats.map(stat => (
+              <StatCard 
+                key={stat.id}
+                title={stat.label}
+                value={formatDuration(stat.value)}
+                color={stat.color}
+              />
+            ))
+          ) : (
+            <Text style={styles.noDataText}>Pas encore assez de données</Text>
+          )}
         </View>
 
-        {/* Camembert Global */}
         <View style={[styles.section, { backgroundColor: cardColor }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: textColor }]}>Répartition Historique</Text>
@@ -141,12 +135,12 @@ const styles = StyleSheet.create({
   sectionHeaderTitle: { fontSize: 22, fontWeight: '600', marginBottom: 10, marginTop: 10 },
   headerSubtitle: { fontSize: 14, color: '#999', marginBottom: 20 },
   divider: { height: 1, backgroundColor: '#eee', marginVertical: 20 },
-  noDataText: { textAlign: 'center', color: '#999', marginVertical: 20, fontStyle: 'italic' },
+  noDataText: { textAlign: 'center', color: '#999', marginVertical: 20, fontStyle: 'italic', width: '100%' },
 
-  cardsRow: {
+  gridContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 15,
     marginBottom: 20,
   },
 
