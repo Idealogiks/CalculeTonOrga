@@ -7,11 +7,6 @@ import AutomaticTimer from '@/components/add/AutomaticTimer';
 import ManualTimeInput from '@/components/add/ManualTimeInput';
 import FloatingActionButtons from '@/components/add/FloatingActionButtons';
 
-//ToDo : Ne prend pas en compte le changement de jour. Du coup, en manuel,  quand on met une heure de fin sur le 
-// jour d'après l'heure du début, ça capte comme une erreur parce que ça compte comme si l'heure de fin était avant 
-// l'heure du début du coup ça marche pas enfin bref c'est pas fou
-
-
 export default function AddActivities() {
   const [title, setTitle] = useState("");
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
@@ -64,13 +59,20 @@ export default function AddActivities() {
     let activityEndTime: Date;
 
     if (isManualMode) {
-      if (manualEndTime < manualStartTime) {
-        Alert.alert("Attention", "L'heure de fin doit être après l'heure de début");
+      activityStartTime = new Date(manualStartTime);
+      activityEndTime = new Date(manualEndTime);
+
+      if (activityEndTime.getTime() < activityStartTime.getTime()) {
+        activityEndTime.setDate(activityEndTime.getDate() + 1);
+      }
+      
+      totalDuration = Math.floor((activityEndTime.getTime() - activityStartTime.getTime()) / 1000);
+      
+      if (totalDuration <= 0) {
+        Alert.alert("Erreur", "La durée calculée est invalide (0 ou négative).");
         return;
       }
-      totalDuration = Math.floor((manualEndTime.getTime() - manualStartTime.getTime()) / 1000);
-      activityStartTime = manualStartTime;
-      activityEndTime = manualEndTime;
+
     } else {
       totalDuration = elapsedTime;
       if (isRecording && startTime) {
@@ -100,9 +102,16 @@ export default function AddActivities() {
         tagId: selectedTag
       });
 
+      const hours = Math.floor(totalDuration / 3600);
+      const minutes = Math.floor((totalDuration % 3600) / 60);
+      const seconds = totalDuration % 60;
+      const displayDuration = hours > 0 
+        ? `${hours}h ${minutes}m` 
+        : `${minutes}m ${seconds}s`;
+
       Alert.alert(
         "✅ Enregistré",
-        `${activityName}\n${Math.floor(totalDuration / 60)}m ${totalDuration % 60}s`
+        `${activityName}\n${displayDuration}`
       );
 
       resetForm();
