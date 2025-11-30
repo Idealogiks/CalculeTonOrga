@@ -41,7 +41,6 @@ export function useAddActivity() {
     setTitle("");
     setLocation("");
     setSelectedTag(null);
-    setSelectedDate(new Date()); 
     setManualStartTime(new Date());
     setManualEndTime(new Date());
   };
@@ -99,6 +98,7 @@ export function useAddActivity() {
 
     } else {
       totalDuration = elapsedTime;
+      
       if (isRecording && startTime) {
         const now = new Date();
         totalDuration += Math.floor((now.getTime() - startTime.getTime()) / 1000);
@@ -109,7 +109,12 @@ export function useAddActivity() {
         return;
       }
 
-      activityEndTime = new Date();
+      const now = new Date();
+      activityEndTime = new Date(selectedDate);
+      activityEndTime.setHours(now.getHours());
+      activityEndTime.setMinutes(now.getMinutes());
+      activityEndTime.setSeconds(now.getSeconds());
+
       activityStartTime = new Date(activityEndTime.getTime() - (totalDuration * 1000));
     }
 
@@ -134,7 +139,7 @@ export function useAddActivity() {
         ? `${hours}h ${minutes}m` 
         : `${minutes}m ${seconds}s`;
 
-      Alert.alert("✅ Enregistré", `${activityName}\n${displayDuration}`);
+      Alert.alert("Enregistré", `${activityName}\n${displayDuration}`);
       resetForm();
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
