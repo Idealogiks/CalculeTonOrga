@@ -1,115 +1,169 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Text } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import * as db from '@/services/database'; 
-import { Activity, Tag } from '@/services/database/types';
-import ActivityForm from '@/components/add/ActivityForm';
-import FloatingActionButtons from '@/components/add/FloatingActionButtons';
-import AddCategoryModal from '@/components/add/AddCategoryModal'; 
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
+import * as db from '@/services/database';
+import { Activity } from '@/services/database/types';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
-export default function EditActivity() {
-  const { id } = useLocalSearchParams(); 
+export default function ActivityDetails() {
+  const { id } = useLocalSearchParams();
   const router = useRouter();
-  
+  const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState('');
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedTag, setSelectedTag] = useState<number | null>(null);
-  
-  const [isModalVisible, setModalVisible] = useState(false);
 
   const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const cardColor = useThemeColor({}, 'card');
+  const primaryColor = useThemeColor({}, 'primary');
+  const subTextColor = useThemeColor({}, 'icon');
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [id])
+  );
 
   const loadData = async () => {
     try {
-      const [activityData, tagsData] = await Promise.all([
-        db.getActivityById(Number(id)), 
-        db.getAllTags()
-      ]);
-
-      if (!activityData) {
-        Alert.alert("Erreur", "Cette activité n'existe plus.");
-        router.back();
-        return;
-      }
-
-      setTitle(activityData.title);
-      setSelectedTag(activityData.tagId);
-      setTags(tagsData);
+      const data = await db.getActivityById(Number(id));
+      setActivity(data);
     } catch (e) {
       console.error(e);
-      Alert.alert("Erreur", "Impossible de charger l'activité");
     } finally {
       setLoading(false);
     }
   };
 
-  const refreshTags = async () => {
-    try {
-      const newTags = await db.getAllTags();
-      setTags(newTags);
-    } catch (error) {
-      console.error("Erreur refresh tags", error);
-    }
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
   };
 
-  const handleUpdate = async () => {
-    if (!selectedTag) {
-      Alert.alert("Erreur", "Veuillez choisir une catégorie");
-      return;
-    }
+  if (loading) return <ActivityIndicator style={{ marginTop: 50 }} />;
 
-    try {
-      await db.updateActivity(Number(id), title, selectedTag);
-      router.back(); 
-    } catch (e) {
-      Alert.alert("Erreur", "La modification a échoué");
-    }
-  };
-
-
-  if (loading) {
-    return <ActivityIndicator style={{ marginTop: 50 }} />;
+  if (!activity) {
+    return (
+      <View style={[styles.container, { backgroundColor, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: textColor }}>Activité introuvable</Text>
+      </View>
+    );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <ScrollView style={[styles.container, { backgroundColor }]} contentContainerStyle={{ padding: 20 }}>
       <Stack.Screen 
         options={{
-          headerTitle: "Modifier",
+          headerTitle: "Détails",
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={() => router.push(`/activities/edit/${id}`)} 
+              style={{ padding: 5 }}
+            >
+              <Text style={{ color: primaryColor, fontSize: 16, fontWeight: '600' }}>Modifier</Text>
+            </TouchableOpacity>
+          )
         }} 
       />
 
-      <ActivityForm
-        title={title}
-        onTitleChange={setTitle}
-        tags={tags}
-        selectedTag={selectedTag}
-        onTagSelect={setSelectedTag}
-        onAddCategoryPress={() => setModalVisible(true)}
-      />
+      <Text style={[styles.title, { color: textColor }]}>{activity.title}</Text>
 
-      <FloatingActionButtons
-        onCancel={() => router.back()}
-        onValidate={handleUpdate}
-      />
+      {activity.tagName && (
+        <View style={[styles.tagContainer, { backgroundColor: activity.tagColor || '#ccc' }]}>
+          <Text style={styles.tagText}>{activity.tagName}</Text>
+        </View>
+      )}
 
-      <AddCategoryModal 
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        onSuccess={() => {
-          refreshTags(); 
-        }}
-      />
-    </View>
+      <View style={styles.divider} />
+
+      <View style={styles.statsContainer}>
+        <View style={[styles.statCard, { backgroundColor: cardColor }]}>
+          <AntDesign name="clock-circle" size={24} color={primaryColor} style={{ marginBottom: 8 }} />
+          <Text style={[styles.statLabel, { color: subTextColor }]}>Durée</Text>
+          <Text style={[styles.statValue, { color: textColor }]}>
+            {formatDuration(activity.duration)}
+          </Text>
+        </View>
+
+        <View style={[styles.statCard, { backgroundColor: cardColor }]}>
+          <AntDesign name="calendar" size={24} color={primaryColor} style={{ marginBottom: 8 }} />
+          <Text style={[styles.statLabel, { color: subTextColor }]}>Date</Text>
+          <Text style={[styles.statValue, { color: textColor }]}>
+            {format(new Date(activity.startTime), 'd MMM', { locale: fr })}
+          </Text>
+        </View>
+      </View>
+
+      {/* Horaires détaillés */}
+      <View style={[styles.detailsCard, { backgroundColor: cardColor }]}>
+        <View style={styles.row}>
+          <Text style={[styles.label, { color: subTextColor }]}>Début</Text>
+          <Text style={[styles.value, { color: textColor }]}>
+            {format(new Date(activity.startTime), 'PPpp', { locale: fr })}
+          </Text>
+        </View>
+        
+        <View style={[styles.divider, { backgroundColor: '#eee', marginVertical: 10 }]} />
+        
+        <View style={styles.row}>
+          <Text style={[styles.label, { color: subTextColor }]}>Fin</Text>
+          <Text style={[styles.value, { color: textColor }]}>
+            {format(new Date(activity.endTime), 'PPpp', { locale: fr })}
+          </Text>
+        </View>
+      </View>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 20 }
+  container: { flex: 1 },
+  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 15 },
+  tagContainer: { 
+    alignSelf: 'flex-start', 
+    paddingHorizontal: 15, 
+    paddingVertical: 8, 
+    borderRadius: 20,
+    marginBottom: 20
+  },
+  tagText: { fontSize: 16, fontWeight: '600', color: '#333' },
+  divider: { height: 1, backgroundColor: 'transparent', marginBottom: 20 },
+  
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 15,
+    marginBottom: 20
+  },
+  statCard: {
+    flex: 1,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statLabel: { fontSize: 12, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 },
+  statValue: { fontSize: 18, fontWeight: '700' },
+
+  detailsCard: {
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  label: { fontSize: 16 },
+  value: { fontSize: 16, fontWeight: '500' }
 });
